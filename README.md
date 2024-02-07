@@ -51,3 +51,12 @@ The player can sometimes die. This can happen if a mob is lured to attack the pl
 ## Metrics
 
 ## Retrospective
+
+### Better Locations?
+
+One thing I realized pretty early on when making this is that other places may actually be better suited to this kind of thing. Delucia gets a lot of foot traffic, so, if you're moving large piles of ore on the ground, people might take them. Griefers may also be more inclined to mess with you as well.
+
+Other locations that should be considered are:
+- Wind: This is a mage-only place, so high magery would be required for entrance. However, once there, it is literally a town in a cave. Being able to mine it may be child's play. I am not entirely certain that this location has a forge though.
+- Cove: Aptly named for the fact that it is a small town within a mountanous cove. It is easy to see in looking at the map in comparison to the Delucia one how 30 or so mining locations could be gotten from there, mined, and banked all before starting again at the top or bottom of the mountain range backdrop for the town. In some servers, I have noticed a forge along the range.
+- Bucs Den: This has a whole cave system under the town. Getting in and out may pose an issue with the waypoint system and require additional logic, but, if that is overcome, it is a very low foot traffic location for a Trammel-based miner. Forges may also be present within the mines.
