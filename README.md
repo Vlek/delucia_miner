@@ -46,6 +46,12 @@ The player can sometimes die. This can happen if a mob is lured to attack the pl
 
 ## Mining Points
 
+As important as the code itself, figuring out where to mine is a crucial part of this process as it will determine what features may need to be present in order to successfully run through a complete loop. This is especially the case given out-of-guard-zone areas may require some alerts or automated ways to combat monster spawns and that other mining areas, such as Bucs Den (more info below), may have teleporters that could be used to get in and out of the mining areas that would pose additional concerns.
+
+For Delucia specifically, I was initially worried that there would not be enough mining locations to run through that would be in an easy enough location for a simple waypoint mining script to access. However, after taking the UO Automap representation of the area, slicing it into the 8x8 squares that the mining locations are broken up in to, and reviewing possible paths, there appear to be ample spots that are easily accessible.
+
+One of the unsung challenges that are likely only going to be fleshed out the best path to use. This is likely only going to be found by analyzing the output from multiple different paths and seeing which best performs on average while also having minimal or no pathing issues.
+
 ## Code Architecture
 
 ## Metrics
