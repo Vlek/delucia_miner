@@ -1,0 +1,454 @@
+; Scythe's AutoMiner Script
+; 2024
+;
+; When I was eleven, I watched my dad attempt to create an autominer script
+; in EasyUO back in 2001. I thought it was magic, and I wanted to learn how
+; to do it myself. I did not at the time, but I kept that passion for coding
+; and finally got a chance in college to take a programming course. I have since
+; gotten my masters in software engineering, and I am currently a senior software
+; developer and team lead. This project is me coming full circle and realizing
+; my first project that I ever wanted to complete. If you are reading this, I
+; hope that you get the chance like I have to attain your dreams.
+;
+; Note: I have done this many times before in other client assistants. I am doing
+; this in a specific way that I saw my dad attempt as far as I can remember what
+; he was doing. This means a few things:
+;    - This is *not* going to be the most efficient thing. It is not a recall
+;      miner script where you can get the best color ore as quickly as possible.
+;    - It is going to need to use the Delucia area because that's where he was.
+;    - I am also going to use pack animals and walking. This is going to greatly
+;      increase the things that can go wrong as you have to worry about pathing
+;      and also the happiness of the pack animals.
+
+
+; TODO: Add the player's bank serial manually here:
+; There does not appear to be a way to gather this information otherwise.
+set %bank_serial YPJRJMD
+
+
+; The reason why all items are surrounded by pipes is so that
+; smaller numbers do not get inappropriately flagged as diggable.
+; e.g., 6 (grass tile) is technically 'in' tile nums like 1356
+; |6| is not in |1356|
+set %digable_tile_types |220|221|222|223|224|225|226|227|228|229|230|231|236|237|
+    +238|239|240|241|242|243|244|245|246|247|252|253|254|255|256|257|258|259|260|
+    +261|262|263|268|269|270|271|272|273|274|275|276|277|278|279|286|287|288|289|
+    +290|291|292|293|294|296|296|297|321|322|323|324|467|468|469|470|471|472|473|
+    +474|476|477|478|479|480|481|482|483|484|485|486|487|492|493|494|495|543|544|
+    +545|546|547|548|549|550|551|552|553|554|555|556|557|558|559|560|561|562|563|
+    +564|565|566|567|568|569|570|571|572|573|574|575|576|577|578|579|581|582|583|
+    +584|585|586|587|588|589|590|591|592|593|594|595|596|597|598|599|600|601|610|
+    +611|612|613|1010|1741|1742|1743|1744|1745|1746|1747|1748|1749|1750|1751|1752|
+    +1753|1754|1755|1756|1757|1771|1772|1773|1774|1775|1776|1777|1778|1779|1780|
+    +1781|1782|1783|1784|1785|1786|1787|1788|1789|1790|1801|1802|1803|1804|1805|
+    +1806|1807|1808|1809|1811|1812|1813|1814|1815|1816|1817|1818|1819|1820|1821|
+    +1822|1823|1824|1831|1832|1833|1834|1835|1836|1837|1838|1839|1840|1841|1842|
+    +1843|1844|1845|1846|1847|1848|1849|1850|1851|1852|1853|1854|1861|1862|1863|
+    +1864|1865|1866|1867|1868|1869|1870|1871|1872|1873|1874|1875|1876|1877|1878|
+    +1879|1880|1881|1882|1883|1884|1981|1982|1983|1984|1985|1986|1987|1988|1989|
+    +1990|1991|1992|1993|1994|1995|1996|1997|1998|1999|2000|2001|2002|2003|2004|
+    +2028|2029|2030|2031|2032|2033|2100|2101|2102|2103|2104|2105|1339|1340|1341|
+    +1342|1343|1344|1345|1346|1347|1348|1349|1350|1351|1352|1353|1354|1355|1356|
+    +1357|1358|1359|
+
+set %ore_pile_graphics |
+  +GWJ|
+  +EWJ|
+  +DWJ|
+  +TVJ|
+
+set %locations |
+  +5279,3968|
+  +5280,3968|
+  +5288,3969|
+  +5294,3972|
+  +5299,3966|
+  +5292,3966|
+  +5289,3958|
+  +5283,3963|
+  +5283,3957|
+  +5272,3961|
+  +5273,3955|
+  +5271,3955|
+  +5264,3960|
+  +5263,3955|
+  +5255,3955|
+  +5249,3961|
+  +5239,3956|
+  +5241,3956|
+  +5251,3947|
+  +5242,3947|
+  +5244,3942|
+  +5249,3938|
+  +5246,3935|
+  +5253,3924|
+  +5247,3925|
+  +5253,3929|
+  +5245,3921|
+  +5231,3929|
+  +5219,3938|
+  +5204,3927|
+  +5203,3930|
+  +5202,3937|
+  +5199,3942|
+  +5210,3941|
+  +5209,3953|
+  +5197,3954|
+  +5197,3961|
+
+str Count %locations |
+set %locations_len #strRes - 1
+
+str Count %ore_pile_graphics |
+set %ore_pile_graphics_len #strRes - 1
+
+set %ore_colors |
+  +0x0|
+  +0x973|
+  +0x966|
+  +0x96D|
+  +0x972|
+  +0x8A5|
+  +0x979|
+  +0x89F|
+  +0x8AB|
+
+str Count %ore_colors |
+set %ore_colors_len #strRes - 1
+
+; We have to initialize the tile suite to get tile information.
+tile init
+
+sub getTileInfo
+  tile get %coordx %coordy 1 #curskind
+  tile cnt %coordx %coordy #curskind
+return
+
+sub msg
+  event sysMessage %1
+return
+
+sub isDigable
+  if | , #tileType , | in %digable
+  {
+    set %tileDigable True
+  }
+  else
+  {
+    set %tileDigable False
+  }
+return
+
+sub ensureAtStartingPosition
+  ; We must ensure that our character is located in an area where they will not
+  ; get stuck on any surrounding buildings.
+  ; The area that we are checking for is the rectangle on the east-side of the
+  ; delucia bank between the bank and the hut.
+  event sysMessage Ensuring character is at starting position
+
+  set %xStartLowerBound 5278
+  set %yStartLowerBound 3971
+  set %xStartUpperBound 5280
+  set %yStartUpperBound 3987
+
+  if ( #CHARPOSX > %xStartUpperBound ||
+     + #CHARPOSX < %xStartLowerBound ||
+     + #CHARPOSY > %yStartUpperBound ||
+     + #CHARPOSY < %yStartLowerBound )
+  {
+    event sysMessage Please move your character to the east side of the delucia bank and restart.
+    stop
+  }
+
+  event sysMessage Character was within the starting bounds. Ready to start!
+return
+
+sub checkForPackAnimals
+  ; Asks the user to select their pack animals so that we know
+  ; to hold their state and check their packs.
+
+  ; if we do not have any followers, do not even have to ask.
+  if #followers = 0 
+  {
+    event sysMessage You did not have any followers, skipping pack animal check.
+    return
+  }
+return
+
+; Gets the substring between separators
+; %1: Search string
+; %2: Index
+; %3; Seperator (defaults to |)
+sub getIndex
+{
+  ; TODO: Figure out how I want to handle default variables
+  ;   and make it so that the sep can be defaulted.
+  set %sep |
+
+  str Count %1 %sep
+  set %sep_count #strRes
+
+  set %first_sep_index %2
+  set %second_sep_index 1 + %2
+
+  str Pos %1 %sep %first_sep_index
+  set %first_sep_pos #strRes
+  
+  str Pos %1 %sep %second_sep_index
+  set %second_sep_pos #strRes
+
+  ; getting a space char after the desired string. removing with -1
+  set %index_string_length %second_sep_pos - %first_sep_pos - 1
+
+  ; for some reason, I am getting a space char here. Need to +1 to remove.
+  set %first_sep_pos %first_sep_pos + 1
+  ; Get the substring between separators
+  str Mid %1 %first_sep_pos %index_string_length
+  set %substring #strRes
+
+  return %substring
+}
+
+sub bankOre
+  ; Moves all ore piles in the player's backpack to the bank.
+  ; Note: this should probably also happen to one's pack animals as well.
+  
+  event sysMessage Banking ore
+
+  ; attempt to open the character's bank box
+  event Macro 1 0 banco
+
+  ; double-check that we have access to the bank box
+    ; throw exception if we cannot access it.
+
+  ; TODO: Add for-each container (player's backpack, pack animal packs)
+  ; for each ore type
+  for %ore_type_index 1 %ore_pile_graphics_len
+  {
+    ; Get the ore graphic id
+    gosub getIndex %ore_pile_graphics %ore_type_index
+    set %current_ore_type #result
+
+    ; findItem only returns one item at a time,
+    ; so we need to run this multiple times until we
+    ; no longer have anymore.
+    repeat
+    {
+      ; try to find the current ore graphic in container
+      findItem %current_ore_type C_ , #BACKPACKID
+      
+      if ( #FINDCNT > 0 )
+      {
+        ; move it to the bank
+        exevent drag #FINDID #FINDSTACK
+        wait 0.5s
+        exevent dropc %bank_serial
+        wait 0.5s
+      }
+    }
+    until #FINDCNT < 1
+  }
+
+  ; if we are anywhere near overweight still,
+  if ( #WEIGHT + 50 >= #MAXWEIGHT )
+  {
+    ; then lets stop the script with an exception message
+    event sysMessage Character does not have enough free space to mine. Please bank some stuff.
+    stop
+  }
+  else
+  {
+    event sysMessage Finished banking ore
+  }
+return
+
+sub restockMiningResources
+  ; In order for us to mine, we really need to have at least one
+  ; tinker's kit and 20 or so iron ingots.
+  ; If the player does not have them on hand, will check the main
+  ; bank container for these items.
+  ; We are going to asusme that the bankbox is already open.
+  
+  ; Double-checking for tinker toolkits. If we do not have one, stop.
+  finditem KTL C_ , #BACKPACKID
+  
+  if ( #FINDCNT = 0 )
+  {
+    event sysMessage We did not have tinker's tools. Please restock and restart.
+    stop
+  }
+  else
+  {
+    event sysMessage Found tinker's tools!
+  }
+
+  ; Double-checking for ingots. We need at least 10.
+  finditem ENK C_ , #BACKPACKID
+  
+  if ( #FINDCNT = 0 || #FINDSTACK < 10 )
+  {
+    event sysMessage Did not find enough ingots, attempting restock.
+    
+    finditem ENK C_ , %bank_serial
+    
+    ; If the player does not even have enough in the bank,
+    if ( #FINDCNT = 0 || #FINDSTACK < 10 )
+    {
+      event sysMessage Did not find enough ingots in the bank, stopping.
+      stop
+    }
+    else
+    {
+      event sysMessage Restocking ingots
+      ; move it to the bank
+      exevent drag #FINDID 10
+      wait 0.5s
+      exevent dropc #BACKPACKID
+      wait 0.5s
+    }
+  }
+return
+
+sub checkForPickaxe
+  ; should return whether we have a pickaxe or not
+  ; while checking,
+    ; if we have a pickaxe
+      ; return TRUE
+    ; else
+      ; if we have the resources,
+        ; if we only have one charge left on our toolkit,
+          ; create a toolkit
+        ; else
+          ; create a pickaxe
+      ; else
+        ; complain that we do not have the resources,
+        return FALSE
+return FALSE
+
+; %1: X Coordinate
+; %2: Y Coordinate
+sub mineXY
+  ; Perform steps to mine a location, such as
+  ; searching for tools, making them, and use
+  ; them to target a location. Also cleaning up
+  ; our backpack if we run out of space.
+  
+  event sysMessage Mining location: %1 %2
+  
+  set %finishedMining #FALSE
+  
+  ; We set these last target items here once so we do
+  ; not repeat them later. In order to target the ground,
+  ; we do a last target on it.
+  set #lTargetX %1
+  set #lTargety %2
+  set #lTargetKind 2
+  
+  while ( ! %finishedMining )
+  {
+  
+    ; Before we even try to mine, we need to ensure that
+    ; we have enough space in our backpack to mine.
+    if ( #MAXWEIGHT - #WEIGHT < 20 )
+    {
+      gosub combineOre
+    }
+    ; Try to find a pickaxe to use
+    finditem QPF c_ , #BACKPACKID
+    
+    if ( #FINDCNT < 1 )
+    {
+      event sysMessage Did not find a pickaxe! Stopping for now!
+      stop
+    }
+    else
+    {
+      set %pickaxeId #FINDID
+    }
+    
+    ; In order to use the pickaxe, we set as last obj and use last obj.
+    set #lObjectID %pickaxeId
+    event Macro 17
+    
+    ; wait for target
+    target 5s
+    
+    ; set last ground target and target ground
+    event Macro 22
+    
+    wait 1s
+  }
+return
+
+sub isCurrentLocationMineable
+  ; isDigable checks for us after we get the tile info
+  ; so all we need to do is get the tile info for the
+  ; current location variables.
+  
+return gosub isDigable
+
+; %1: X Coordinate
+; %2: Y Coordinate
+; %3: Radius from coordinate
+sub walkToXY
+  ; Using the built-in dumb move. There's a pathfinder version,
+  ; but that feels overkill and also has the drawback of not
+  ; stopping the script's execution while it's running. All I
+  ; have to do is stay cognizant of the limitations of move
+  ; and this should work just fine.
+
+  move %1 %2 %3 5s
+  
+return
+
+sub automine
+  ; This is the main mining loop
+
+  event sysMessage Starting the autominer script!
+
+  ; This is where any initial information gathering should take place.
+  gosub checkForPackAnimals
+
+  ; while not dead,
+  while #charGhost = NO
+  {
+    ; this is here because we can attempt to come back around,
+    ; get lost, and then not be at the starting position.
+    ; Also, a bit more dire. We could have been at the bank,
+    ; gotten jailed, and now are no longer where we should be.
+    gosub ensureAtStartingPosition
+
+    gosub bankOre
+
+    gosub restockMiningResources
+
+    ; TODO add something here for feeding pets if we have them
+
+    ; for each location,
+    for %location_index 1 %locations_len
+    {
+      ; Pull out the info for the next location
+      gosub getIndex %locations %location_index
+      set %current_location_values #result
+
+      ; For where we are, every location's x/y are going to be 4 digits.
+      ; Note though that this may not be the case elsewhere!
+      ; create variables for x/y coordinate
+      str Left %current_location_values 4
+      set %current_location_x #strRes
+      str Right %current_location_values 4
+      set %current_location_y #strRes
+
+      gosub walkToXY %current_location_x %curretn_location_y
+
+      ; check of x/y is mineable
+
+      ; if next spot is mineable,
+        gosub mineXY
+    }
+  }
+
+return
+
+; gosub automine
+gosub bankOre

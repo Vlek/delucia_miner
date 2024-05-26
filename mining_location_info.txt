@@ -1,0 +1,50 @@
+# From back of bank:
+5279 3968
+5280 3968
+- May require a waypoint here, have to go southeast a bit
+5288 3969
+- Will absolutely need a waypoint here. Have to go around mountain penninsula
+5292 3966
+- May require waypoint, slight bump to get to next area
+5289 3958
+5283 3963
+5283 3957
+5272 3961
+5273 3955
+5271 3955
+5264 3960
+5263 3955
+5255 3955
+5249 3961
+- May require a waypoint? Small mountain bit sticking out here
+5239 3956
+5241 3956
+5251 3947
+5242 3947
+- May require a waypoint, small mountain tile out
+5244 3942
+- May require a waypoint
+5246 3935
+5253 3924
+5247 3925
+- Most likely a waypoint. Have to navigate a bend.
+5263 3929
+5231 3929
+- Going mostly southwest. No clue if waypoint needed. Depends on walking algo
+5219 3938
+5204 3927
+5203 3930
+5202 3937
+5199 3942
+- Waypoints required: 5208 3943 -> 5208 3952
+5197 3954
+5197 3961
+
+At this point, we can walk to the smelter
+
+# Smelter to bank
+Side of field 5248 4006
+North of previous point 5249 3998
+southwest side of bank 5257 3990
+southeast side of bank 5279 3990
+bank spot 5279 3977

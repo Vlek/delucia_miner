@@ -1,0 +1,38 @@
+
+
+locations = [
+  # Do we really need to say whether a point is a waypoint?
+  # I ask because we can just check the type of tile to know.
+  [x, y, isWaypoint]
+]
+
+
+def pathing(x, y):
+  # I think here we can just do diagonals until straights.
+
+  # If we feel up to it, we can perform a move and then do:
+  directionsToTry = [diagonal, straightx, straighty]
+
+  for direction in directionsToTry:
+    currentLocation = (x, y)
+
+    move(direction)
+
+    if x == newX and y == newY:
+      break
+
+  if x != newX or y != newY:
+    throw "stuck :C"
+
+
+def makeTools():
+  ...
+
+
+def hasTools():
+  ...
+
+
+while not dead:
+
+  
