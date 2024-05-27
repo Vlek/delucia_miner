@@ -21,41 +21,21 @@
 ;      and also the happiness of the pack animals.
 
 
-; TODO: Add the player's bank serial manually here:
-; There does not appear to be a way to gather this information otherwise.
+event sysMessage Starting the autominer script!
+
 set %bank_serial YPJRJMD
+set %bank_box C_ , %bank_serial
+set %backpack C_ , #BACKPACKID
 
-
-; The reason why all items are surrounded by pipes is so that
-; smaller numbers do not get inappropriately flagged as diggable.
-; e.g., 6 (grass tile) is technically 'in' tile nums like 1356
-; |6| is not in |1356|
-set %digable_tile_types |220|221|222|223|224|225|226|227|228|229|230|231|236|237|
-    +238|239|240|241|242|243|244|245|246|247|252|253|254|255|256|257|258|259|260|
-    +261|262|263|268|269|270|271|272|273|274|275|276|277|278|279|286|287|288|289|
-    +290|291|292|293|294|296|296|297|321|322|323|324|467|468|469|470|471|472|473|
-    +474|476|477|478|479|480|481|482|483|484|485|486|487|492|493|494|495|543|544|
-    +545|546|547|548|549|550|551|552|553|554|555|556|557|558|559|560|561|562|563|
-    +564|565|566|567|568|569|570|571|572|573|574|575|576|577|578|579|581|582|583|
-    +584|585|586|587|588|589|590|591|592|593|594|595|596|597|598|599|600|601|610|
-    +611|612|613|1010|1741|1742|1743|1744|1745|1746|1747|1748|1749|1750|1751|1752|
-    +1753|1754|1755|1756|1757|1771|1772|1773|1774|1775|1776|1777|1778|1779|1780|
-    +1781|1782|1783|1784|1785|1786|1787|1788|1789|1790|1801|1802|1803|1804|1805|
-    +1806|1807|1808|1809|1811|1812|1813|1814|1815|1816|1817|1818|1819|1820|1821|
-    +1822|1823|1824|1831|1832|1833|1834|1835|1836|1837|1838|1839|1840|1841|1842|
-    +1843|1844|1845|1846|1847|1848|1849|1850|1851|1852|1853|1854|1861|1862|1863|
-    +1864|1865|1866|1867|1868|1869|1870|1871|1872|1873|1874|1875|1876|1877|1878|
-    +1879|1880|1881|1882|1883|1884|1981|1982|1983|1984|1985|1986|1987|1988|1989|
-    +1990|1991|1992|1993|1994|1995|1996|1997|1998|1999|2000|2001|2002|2003|2004|
-    +2028|2029|2030|2031|2032|2033|2100|2101|2102|2103|2104|2105|1339|1340|1341|
-    +1342|1343|1344|1345|1346|1347|1348|1349|1350|1351|1352|1353|1354|1355|1356|
-    +1357|1358|1359|
-
+; Note, small pile is first. Important for combining ore later.
 set %ore_pile_graphics |
+  +TVJ|
   +GWJ|
   +EWJ|
   +DWJ|
-  +TVJ|
+
+str Count %ore_pile_graphics |
+set %ore_pile_graphics_len #strRes - 1
 
 set %locations |
   +5279,3968|
@@ -99,44 +79,56 @@ set %locations |
 str Count %locations |
 set %locations_len #strRes - 1
 
-str Count %ore_pile_graphics |
-set %ore_pile_graphics_len #strRes - 1
-
 set %ore_colors |
-  +0x0|
-  +0x973|
-  +0x966|
-  +0x96D|
-  +0x972|
-  +0x8A5|
-  +0x979|
-  +0x89F|
-  +0x8AB|
+  +0|
+  +2419|
+  +2406|
+  +2413|
+  +2418|
+  +2213|
+  +2425|
+  +2207|
+  +2219|
 
 str Count %ore_colors |
 set %ore_colors_len #strRes - 1
 
-; We have to initialize the tile suite to get tile information.
-tile init
-
-sub getTileInfo
-  tile get %coordx %coordy 1 #curskind
-  tile cnt %coordx %coordy #curskind
+; %1: X Coordinate Offset
+; %2: Y Coordinate Offset
+sub clickGumpXY
+  set %click_pos_x #CONTPOSX + %1
+  set %click_pos_y #CONTPOSY + %2
+  click %click_pos_x %click_pos_y
 return
 
-sub msg
-  event sysMessage %1
+; %1: Object ID
+; %2: Target Kind
+sub useObject
+  event sysMessage Using object %1
+  set #LOBJECTID %1
+  set #LTARGETID %1
+
+  event Macro 17
 return
 
-sub isDigable
-  if | , #tileType , | in %digable
-  {
-    set %tileDigable True
-  }
-  else
-  {
-    set %tileDigable False
-  }
+; %1 : X Coordinate
+; %2 : Y Coordinate
+sub targetGroundXY
+  set #LTARGETX %1
+  set #LTARGETY %2
+  ;set #LTARGETZ -1
+  set #LTARGETKIND 2
+  
+  event Macro 22
+return
+
+; %1: Object ID
+sub targetObject
+  set #LTARGETKIND 1
+  set #LTARGETID %1
+  set #LOBJECTID %1
+
+  event Macro 22
 return
 
 sub ensureAtStartingPosition
@@ -168,10 +160,9 @@ sub checkForPackAnimals
   ; to hold their state and check their packs.
 
   ; if we do not have any followers, do not even have to ask.
-  if #followers = 0 
+  if #followers = 0
   {
     event sysMessage You did not have any followers, skipping pack animal check.
-    return
   }
 return
 
@@ -193,7 +184,7 @@ sub getIndex
 
   str Pos %1 %sep %first_sep_index
   set %first_sep_pos #strRes
-  
+
   str Pos %1 %sep %second_sep_index
   set %second_sep_pos #strRes
 
@@ -212,7 +203,7 @@ sub getIndex
 sub bankOre
   ; Moves all ore piles in the player's backpack to the bank.
   ; Note: this should probably also happen to one's pack animals as well.
-  
+
   event sysMessage Banking ore
 
   ; attempt to open the character's bank box
@@ -235,15 +226,15 @@ sub bankOre
     repeat
     {
       ; try to find the current ore graphic in container
-      findItem %current_ore_type C_ , #BACKPACKID
-      
+      findItem %current_ore_type %backpack
+
       if ( #FINDCNT > 0 )
       {
         ; move it to the bank
         exevent drag #FINDID #FINDSTACK
-        wait 0.5s
+        wait 1s
         exevent dropc %bank_serial
-        wait 0.5s
+        wait 1s
       }
     }
     until #FINDCNT < 1
@@ -268,31 +259,27 @@ sub restockMiningResources
   ; If the player does not have them on hand, will check the main
   ; bank container for these items.
   ; We are going to asusme that the bankbox is already open.
-  
+
   ; Double-checking for tinker toolkits. If we do not have one, stop.
-  finditem KTL C_ , #BACKPACKID
-  
+  finditem KTL %backpack
+
   if ( #FINDCNT = 0 )
   {
     event sysMessage We did not have tinker's tools. Please restock and restart.
     stop
   }
-  else
-  {
-    event sysMessage Found tinker's tools!
-  }
 
   ; Double-checking for ingots. We need at least 10.
-  finditem ENK C_ , #BACKPACKID
-  
-  if ( #FINDCNT = 0 || #FINDSTACK < 10 )
+  finditem ENK %backpack
+
+  if ( #FINDCNT = 0 || #FINDSTACK < 20 )
   {
     event sysMessage Did not find enough ingots, attempting restock.
-    
+
     finditem ENK C_ , %bank_serial
-    
+
     ; If the player does not even have enough in the bank,
-    if ( #FINDCNT = 0 || #FINDSTACK < 10 )
+    if ( #FINDCNT = 0 || #FINDSTACK < 20 )
     {
       event sysMessage Did not find enough ingots in the bank, stopping.
       stop
@@ -301,29 +288,111 @@ sub restockMiningResources
     {
       event sysMessage Restocking ingots
       ; move it to the bank
-      exevent drag #FINDID 10
-      wait 0.5s
+      ; TODO: only grab enough to get us to 20.
+      exevent drag #FINDID 20
+      wait 1s
       exevent dropc #BACKPACKID
-      wait 0.5s
+      wait 1s
     }
   }
 return
 
-sub checkForPickaxe
-  ; should return whether we have a pickaxe or not
-  ; while checking,
-    ; if we have a pickaxe
-      ; return TRUE
-    ; else
-      ; if we have the resources,
-        ; if we only have one charge left on our toolkit,
-          ; create a toolkit
-        ; else
-          ; create a pickaxe
-      ; else
-        ; complain that we do not have the resources,
-        return FALSE
-return FALSE
+; %1: Item Type
+; %2: Container
+; %3: Color
+sub findFirstItemByColor
+  set %firstItem N/A
+
+  finditem %1 %2
+
+  ; If we found something,
+  if ( #FINDCNT > 0 )
+  {
+    ; for each item that we found,
+    for #FINDINDEX 1 #FINDCNT
+    {
+      ; If the found item has the right color,
+      if ( #FINDCOL = %3 )
+      {
+        set %firstItem #FINDID
+      }
+    }
+  }
+
+return %firstItem
+
+sub combineOre
+  ; for each ore color,
+  for %ore_color_index 1 %ore_colors_len
+  {
+    gosub getIndex %ore_colors %ore_color_index
+    set %ore_color #RESULT
+
+    event sysMessage Combing ore for color: %ore_color
+
+    ; First, we need to get a small of the ore color
+    gosub findFirstItemByColor TVJ %backpack %ore_color
+    set %small_ore_pile_id #RESULT
+
+    event sysMessage small id: %small_ore_pile_id
+
+    if %small_ore_pile_id <> N/A
+    {
+      for %large_pile_type 2 %ore_pile_graphics_len
+      {
+
+        gosub getIndex %ore_pile_graphics %large_pile_type
+        set %ore_graphic #RESULT
+
+        event sysMessage Searching for ore graphic: %ore_graphic
+
+        ; There should only be one item of the type for each color,
+        ; so we do not really need to for-loop here.
+        gosub findFirstItemByColor %ore_graphic %backpack %ore_color
+        set %bigOrePile #RESULT
+
+        ; If we did not find one,
+        if ( #FINDCNT < 1 )
+        {
+          continue
+        }
+
+        gosub useObject %bigOrePile
+
+        ; wait for target
+        target 5s
+
+        ; target the little pile
+        gosub targetObject %small_ore_pile_id
+        wait 1s
+      }
+    }
+  }
+return
+
+set %no_metal no_metal_here_to_mine.
+set %cannot_mind can't_mine_there.
+set %cannot_see cannot_be_seen.
+
+sub miningStopMessageReceived
+  scanJournal #JIndex
+  set %received #FALSE
+
+  if ( %no_metal in #JOURNAL )
+  {
+    set %received #TRUE
+  }
+  if ( %cannot_mind in #JOURNAL )
+  {
+    set %received #TRUE
+  }
+  if ( %cannot_see in #JOURNAL )
+  {
+    set %received #TRUE
+  }
+
+  set #RESULT %received
+return %received
 
 ; %1: X Coordinate
 ; %2: Y Coordinate
@@ -332,60 +401,43 @@ sub mineXY
   ; searching for tools, making them, and use
   ; them to target a location. Also cleaning up
   ; our backpack if we run out of space.
-  
   event sysMessage Mining location: %1 %2
-  
+
   set %finishedMining #FALSE
-  
-  ; We set these last target items here once so we do
-  ; not repeat them later. In order to target the ground,
-  ; we do a last target on it.
-  set #lTargetX %1
-  set #lTargety %2
-  set #lTargetKind 2
-  
-  while ( ! %finishedMining )
+
+  while %finishedMining <> #TRUE
   {
-  
     ; Before we even try to mine, we need to ensure that
     ; we have enough space in our backpack to mine.
-    if ( #MAXWEIGHT - #WEIGHT < 20 )
+    if #WEIGHT + 20 > #MAXWEIGHT
     {
       gosub combineOre
     }
-    ; Try to find a pickaxe to use
-    finditem QPF c_ , #BACKPACKID
-    
-    if ( #FINDCNT < 1 )
-    {
-      event sysMessage Did not find a pickaxe! Stopping for now!
-      stop
-    }
-    else
-    {
-      set %pickaxeId #FINDID
-    }
-    
-    ; In order to use the pickaxe, we set as last obj and use last obj.
-    set #lObjectID %pickaxeId
-    event Macro 17
-    
+
+    event sysMessage Attempting to find or make pickaxe
+
+    gosub findOrMakePickaxe
+    set %pickaxeId #RESULT
+
+    event sysMessage Using found pickaxe
+    gosub useObject %pickaxeId
+
     ; wait for target
     target 5s
-    
-    ; set last ground target and target ground
-    event Macro 22
-    
-    wait 1s
-  }
-return
 
-sub isCurrentLocationMineable
-  ; isDigable checks for us after we get the tile info
-  ; so all we need to do is get the tile info for the
-  ; current location variables.
-  
-return gosub isDigable
+    ; set last ground target and target ground
+    gosub targetGroundXY %1 %2
+
+    wait 1s
+
+    gosub miningStopMessageReceived
+    set %finishedMining #RESULT
+  }
+
+  ; Afterwards, we should combine the ore that we mined.
+  ; This may save us some stamina while walking.
+  gosub combineOre
+return
 
 ; %1: X Coordinate
 ; %2: Y Coordinate
@@ -397,14 +449,81 @@ sub walkToXY
   ; have to do is stay cognizant of the limitations of move
   ; and this should work just fine.
 
+  event sysMessage Walking to point.
   move %1 %2 %3 5s
-  
 return
+
+sub findOrMakePickaxe
+
+  set %found_pickaxe #FALSE
+
+  while ( ! %found_pickaxe )
+  {
+    ; Try to find a pickaxe to use
+    finditem QPF %backpack
+
+    if ( #FINDCNT < 1 )
+    {
+      ; Double-check we have enough ingots on hand,
+      finditem ENK C_ , #BACKPACKID
+      set %ingot_count #FINDSTACK
+
+      ; Try to find a toolkit
+      finditem KTL %backpack
+      set %toolkit_id #FINDID
+
+      if ( #FINDCNT < 1 || %ingot_count < 4 )
+      {
+        event sysMessage Did not find tools or enough ingots, stopping!
+        stop
+      }
+
+      ; Double-click on tools by setting last target, use last target
+      gosub useObject %toolkit_id
+
+      ; Wait for the gump to appear. This is rather hard to do an actual
+      ; wait, so we are just going to use seconds here. This does not
+      ; happen THAT often, so it's not a huge cost to eat.
+      wait 1s
+
+      ; First, we click on the Tools category
+      gosub clickGumpXY 25 110
+
+      if ( #FINDCNT < 2 )
+      {
+        event sysMessage Only found one toolkit, making another.
+        ; Click on tinker's toolkit button
+        gosub clickGumpXY 230 128
+      }
+      else
+      {
+        event sysMessage Making a pickaxe!
+        ; Click Next Page button
+        gosub clickGumpXY 380 270
+
+        wait 1s
+
+        ; Click pickaxe button
+        gosub clickGumpXY 234 191
+      }
+
+      ; The server does add a pause to the item creation here.
+      ; Must wait to register that the toolkit or pickaxe are
+      ; in our backpack after the creation attempt.
+      wait 2s
+    }
+    else
+    {
+      set %pickaxeId #FINDID
+      set %found_pickaxe #TRUE
+    }
+  }
+
+return %pickaxeId
 
 sub automine
   ; This is the main mining loop
-
-  event sysMessage Starting the autominer script!
+  event sysMessage Starting to mine!
 
   ; This is where any initial information gathering should take place.
   gosub checkForPackAnimals
@@ -439,16 +558,20 @@ sub automine
       str Right %current_location_values 4
       set %current_location_y #strRes
 
-      gosub walkToXY %current_location_x %curretn_location_y
+      event sysMessage walking to new point!
+      gosub walkToXY %current_location_x %current_location_y 2
 
-      ; check of x/y is mineable
-
+      ; TODO: Add check to see whether the next spot is mineable.
+      ; I think I am going to add a flag to each location.
+      ; W = Waypoint, M = Mineable?
       ; if next spot is mineable,
-        gosub mineXY
+      gosub mineXY %current_location_x %current_location_y
     }
   }
 
 return
 
-; gosub automine
-gosub bankOre
+event sysMessage Finished loading in all of the code.
+
+gosub automine
+stop
