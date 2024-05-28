@@ -250,11 +250,14 @@ sub bankOre
 
     findItem %current_ore_type %containerToBankFrom
 
-    for #FINDINDEX 1 #FINDCNT
+    if #FINDCNT > 0
     {
-      if #FINDBAGID = %containerToBankFrom
+      for #FINDINDEX 1 #FINDCNT
       {
-        gosub moveItemToContainer #FINDID %bank_serial
+        if #FINDBAGID = %containerToBankFrom
+        {
+          gosub moveItemToContainer #FINDID %bank_serial
+        }
       }
     }
   }
@@ -325,7 +328,7 @@ sub findFirstItemByColor
   finditem %1 %2
 
   ; If we found something,
-  if ( #FINDCNT > 0 )
+  if #FINDCNT > 0
   {
     ; for each item that we found,
     for #FINDINDEX 1 #FINDCNT
@@ -559,15 +562,18 @@ sub moveOreToPackAnimal
 
     event sysMessage Num found: #FINDCNT
 
-    ; For each of the piles we found,
-    for #FINDINDEX 1 #FINDCNT
+    if #FINDCNT > 0
     {
-      event sysMessage Index: #FINDINDEX
-
-      if #FINDBAGID = #BACKPACKID
+      ; For each of the piles we found,
+      for #FINDINDEX 1 #FINDCNT
       {
-        event sysMessage Moving ore pile with id: #FINDID
-        gosub moveItemToContainer #FINDID %packanimal_id
+        event sysMessage Index: #FINDINDEX
+
+        if #FINDBAGID = #BACKPACKID
+        {
+          event sysMessage Moving ore pile with id: #FINDID
+          gosub moveItemToContainer #FINDID %packanimal_id
+        }
       }
     }
   }
