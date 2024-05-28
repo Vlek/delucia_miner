@@ -237,6 +237,7 @@ sub bankOre
 
   ; Open the container just in case
   gosub useObject %containerToBankFrom
+  wait 1s
 
   ; attempt to open the character's bank box
   event Macro 1 0 banco
