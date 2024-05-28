@@ -234,7 +234,7 @@ sub bankOre
   set %containerToBankFrom %1
 
   event sysMessage Banking ore
-  
+
   ; Open the container just in case
   gosub useObject %containerToBankFrom
 
@@ -247,9 +247,9 @@ sub bankOre
     ; Get the ore graphic id
     gosub getIndex %ore_pile_graphics %ore_type_index |
     set %current_ore_type #result
-    
+
     findItem %current_ore_type %containerToBankFrom
-    
+
     for #FINDINDEX 1 #FINDCNT
     {
       if #FINDBAGID = %containerToBankFrom
@@ -359,7 +359,6 @@ sub combineOre
     {
       for %large_pile_type 2 %ore_pile_graphics_len
       {
-
         gosub getIndex %ore_pile_graphics %large_pile_type |
         set %ore_graphic #RESULT
 
@@ -370,20 +369,17 @@ sub combineOre
         gosub findFirstItemByColor %ore_graphic %backpack %ore_color
         set %bigOrePile #RESULT
 
-        ; If we did not find one,
-        if ( #FINDCNT < 1 )
+        if %bigOrePile <> N/A
         {
-          continue
+          gosub useObject %bigOrePile
+
+          ; wait for target
+          target 5s
+
+          ; target the little pile
+          gosub targetObject %small_ore_pile_id
+          wait 1s
         }
-
-        gosub useObject %bigOrePile
-
-        ; wait for target
-        target 5s
-
-        ; target the little pile
-        gosub targetObject %small_ore_pile_id
-        wait 1s
       }
     }
   }
