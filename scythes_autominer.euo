@@ -560,20 +560,22 @@ sub moveOreToPackAnimal
     event sysMessage Searching for ore graphic: %ore_graphic
 
     finditem %ore_graphic %backpackid
+    set %ore_count #FINDCNT
 
-    event sysMessage Num found: #FINDCNT
+    event sysMessage Num found: %ore_count
 
-    if #FINDCNT > 0
+    if %ore_count > 0
     {
       ; For each of the piles we found,
-      for #FINDINDEX 1 #FINDCNT
+      for #FINDINDEX 1 %ore_count
       {
-        event sysMessage Index: #FINDINDEX
+        event sysMessage Index: #FINDINDEX #FINDBAGID
 
         if #FINDBAGID = #BACKPACKID
         {
-          event sysMessage Moving ore pile with id: #FINDID
-          gosub moveItemToContainer #FINDID %packanimal_id
+          set %ore_pile_found #FINDID
+          event sysMessage Moving ore pile with id: %ore_pile_found 
+          gosub moveItemToContainer %ore_pile_found %packanimal_id
         }
       }
     }
