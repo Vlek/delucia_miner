@@ -291,14 +291,14 @@ sub restockMiningResources
   ; Double-checking for ingots. We need at least 10.
   finditem ENK %backpack
 
-  if ( #FINDCNT = 0 || #FINDSTACK < 20 )
+  if ( #FINDCNT = 0 || #FINDSTACK < 50 )
   {
     event sysMessage Did not find enough ingots, attempting restock.
 
     finditem ENK C_ , %bank_serial
 
     ; If the player does not even have enough in the bank,
-    if ( #FINDCNT = 0 || #FINDSTACK < 20 )
+    if ( #FINDCNT = 0 || #FINDSTACK < 50 )
     {
       event sysMessage Did not find enough ingots in the bank, stopping.
       stop
@@ -307,8 +307,8 @@ sub restockMiningResources
     {
       event sysMessage Restocking ingots
       ; move it to the bank
-      ; TODO: only grab enough to get us to 20.
-      exevent drag #FINDID 20
+      ; TODO: only grab enough to get us to 50.
+      exevent drag #FINDID 50
       wait 1s
       exevent dropc #BACKPACKID
       wait 1s
