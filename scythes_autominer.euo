@@ -23,6 +23,8 @@
 
 event sysMessage Starting the autominer script!
 
+set %packanimal_id WPSALMD
+
 set %bank_serial YPJRJMD
 set %bank_box C_ , %bank_serial
 set %backpack C_ , #BACKPACKID
@@ -38,43 +40,42 @@ str Count %ore_pile_graphics |
 set %ore_pile_graphics_len #strRes - 1
 
 set %locations |
-  +5279,3968|
-  +5280,3968|
-  +5288,3969|
-  +5294,3972|
-  +5299,3966|
-  +5292,3966|
-  +5289,3958|
-  +5283,3963|
-  +5283,3957|
-  +5272,3961|
-  +5273,3955|
-  +5271,3955|
-  +5264,3960|
-  +5263,3955|
-  +5255,3955|
-  +5249,3961|
-  +5239,3956|
-  +5241,3956|
-  +5251,3947|
-  +5242,3947|
-  +5244,3942|
-  +5249,3938|
-  +5246,3935|
-  +5253,3924|
-  +5247,3925|
-  +5253,3929|
-  +5245,3921|
-  +5231,3929|
-  +5219,3938|
-  +5204,3927|
-  +5203,3930|
-  +5202,3937|
-  +5199,3942|
-  +5210,3941|
-  +5209,3953|
-  +5197,3954|
-  +5197,3961|
+  +_5279_3968_38_|
+  +_5280_3968_38_|
+  +_5288_3969_38_|
+  +_5294_3972_W_|
+  +_5299_3966_W_|
+  +_5292_3966_42_|
+  +_5289_3958_38_|
+  +_5283_3963_38_|
+  +_5283_3957_38_|
+  +_5272_3961_38_|
+  +_5273_3955_38_|
+  +_5271_3955_38_|
+  +_5264_3960_38_|
+  +_5263_3955_38_|
+  +_5255_3955_38_|
+  +_5249_3961_38_|
+  +_5239_3956_38_|
+  +_5241_3956_38_|
+  +_5251_3947_38_|
+  +_5242_3947_38_|
+  +_5244_3942_38_|
+  +_5249_3938_W_|
+  +_5246_3935_38_|
+  +_5253_3924_38_|
+  +_5247_3925_38_|
+  +_5245_3921_W_|
+  +_5231_3929_38_|
+  +_5219_3938_38_|
+  +_5204_3927_38_|
+  +_5203_3930_38_|
+  +_5202_3937_38_|
+  +_5199_3942_38_|
+  +_5210_3941_W_|
+  +_5209_3953_W_|
+  +_5197_3954_38_|
+  +_5197_3961_38_|
 
 str Count %locations |
 set %locations_len #strRes - 1
@@ -113,12 +114,14 @@ return
 
 ; %1 : X Coordinate
 ; %2 : Y Coordinate
-sub targetGroundXY
+; %3 : Z Coordinate
+sub targetGroundXYZ
+  event sysMessage Targeting: %1 %2 %3
   set #LTARGETX %1
   set #LTARGETY %2
-  ;set #LTARGETZ -1
+  set #LTARGETZ %3
   set #LTARGETKIND 2
-  
+
   event Macro 22
 return
 
@@ -174,7 +177,17 @@ sub getIndex
 {
   ; TODO: Figure out how I want to handle default variables
   ;   and make it so that the sep can be defaulted.
-  set %sep |
+
+  if %3 <> N/A
+  {
+    set %sep %3
+  }
+  else
+  {
+    ; default is a pipe.
+    set %sep |
+  }
+
 
   str Count %1 %sep
   set %sep_count #strRes
@@ -197,6 +210,9 @@ sub getIndex
   str Mid %1 %first_sep_pos %index_string_length
   set %substring #strRes
 
+  ; Unsetting the sep variable so it does not default later.
+  deletevar %3
+
   return %substring
 }
 
@@ -217,7 +233,7 @@ sub bankOre
   for %ore_type_index 1 %ore_pile_graphics_len
   {
     ; Get the ore graphic id
-    gosub getIndex %ore_pile_graphics %ore_type_index
+    gosub getIndex %ore_pile_graphics %ore_type_index |
     set %current_ore_type #result
 
     ; findItem only returns one item at a time,
@@ -312,7 +328,7 @@ sub findFirstItemByColor
     for #FINDINDEX 1 #FINDCNT
     {
       ; If the found item has the right color,
-      if ( #FINDCOL = %3 )
+      if #FINDCOL = %3 && #FINDBAGID = #BACKPACKID
       {
         set %firstItem #FINDID
       }
@@ -325,7 +341,7 @@ sub combineOre
   ; for each ore color,
   for %ore_color_index 1 %ore_colors_len
   {
-    gosub getIndex %ore_colors %ore_color_index
+    gosub getIndex %ore_colors %ore_color_index |
     set %ore_color #RESULT
 
     event sysMessage Combing ore for color: %ore_color
@@ -341,7 +357,7 @@ sub combineOre
       for %large_pile_type 2 %ore_pile_graphics_len
       {
 
-        gosub getIndex %ore_pile_graphics %large_pile_type
+        gosub getIndex %ore_pile_graphics %large_pile_type |
         set %ore_graphic #RESULT
 
         event sysMessage Searching for ore graphic: %ore_graphic
@@ -396,12 +412,17 @@ return %received
 
 ; %1: X Coordinate
 ; %2: Y Coordinate
-sub mineXY
+; %3: Z Coordinate
+sub mineXYZ
   ; Perform steps to mine a location, such as
   ; searching for tools, making them, and use
   ; them to target a location. Also cleaning up
   ; our backpack if we run out of space.
-  event sysMessage Mining location: %1 %2
+  event sysMessage Mining location: %1 %2 %3
+
+  set %mining_location_x %1
+  set %mining_location_y %2
+  set %mining_location_z %3
 
   set %finishedMining #FALSE
 
@@ -426,17 +447,13 @@ sub mineXY
     target 5s
 
     ; set last ground target and target ground
-    gosub targetGroundXY %1 %2
+    gosub targetGroundXYZ %mining_location_x %mining_location_y %mining_location_z
 
     wait 1s
 
     gosub miningStopMessageReceived
     set %finishedMining #RESULT
   }
-
-  ; Afterwards, we should combine the ore that we mined.
-  ; This may save us some stamina while walking.
-  gosub combineOre
 return
 
 ; %1: X Coordinate
@@ -521,6 +538,42 @@ sub findOrMakePickaxe
 
 return %pickaxeId
 
+; %1: Object ID
+; %2: Container ID
+sub moveItemToContainer
+    ; move it to the bank
+    exevent drag %1 60000
+    wait 1s
+    exevent dropc %2
+    wait 1s
+return
+
+sub moveOreToPackAnimal
+  for %graphic_index 1 %ore_pile_graphics_len
+  {
+    gosub getIndex %ore_pile_graphics %graphic_index |
+    set %ore_graphic #RESULT
+
+    event sysMessage Searching for ore graphic: %ore_graphic
+
+    finditem %ore_graphic %backpackid
+
+    event sysMessage Num found: #FINDCNT
+
+    ; For each of the piles we found,
+    for #FINDINDEX 1 #FINDCNT
+    {
+      event sysMessage Index: #FINDINDEX
+
+      if #FINDBAGID = #BACKPACKID
+      {
+        event sysMessage Moving ore pile with id: #FINDID
+        gosub moveItemToContainer #FINDID %packanimal_id
+      }
+    }
+  }
+return
+
 sub automine
   ; This is the main mining loop
   event sysMessage Starting to mine!
@@ -547,31 +600,40 @@ sub automine
     for %location_index 1 %locations_len
     {
       ; Pull out the info for the next location
-      gosub getIndex %locations %location_index
+      gosub getIndex %locations %location_index |
       set %current_location_values #result
+      
+      gosub getIndex %current_location_values 1 _
+      set %current_location_x #RESULT
 
-      ; For where we are, every location's x/y are going to be 4 digits.
-      ; Note though that this may not be the case elsewhere!
-      ; create variables for x/y coordinate
-      str Left %current_location_values 4
-      set %current_location_x #strRes
-      str Right %current_location_values 4
-      set %current_location_y #strRes
+      gosub getIndex %current_location_values 2 _
+      set %current_location_y #RESULT
 
-      event sysMessage walking to new point!
+      gosub getIndex %current_location_values 3 _
+      set %current_location_z #RESULT
+
+      event sysMessage Walking to: %current_location_x %current_location_y
+      
       gosub walkToXY %current_location_x %current_location_y 2
 
-      ; TODO: Add check to see whether the next spot is mineable.
-      ; I think I am going to add a flag to each location.
-      ; W = Waypoint, M = Mineable?
-      ; if next spot is mineable,
-      gosub mineXY %current_location_x %current_location_y
+
+      if %current_location_z <> W
+      {
+        gosub mineXYZ %current_location_x %current_location_y %current_location_z
+        
+        ; Once we're done mining, we need to do a combine ore at the end
+        gosub combineOre
+        
+        ; After that, we can stow onto a pack animal.
+        ; Pack horse object type: ZJF
+        gosub moveOreToPackAnimal
+      }
     }
   }
-
 return
 
 event sysMessage Finished loading in all of the code.
 
 gosub automine
+;gosub combineOre
 stop
