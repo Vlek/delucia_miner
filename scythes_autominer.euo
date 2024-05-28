@@ -229,44 +229,34 @@ sub getIndex
   return %substring
 }
 
+; %1: Container to bank from
 sub bankOre
-  ; Moves all ore piles in the player's backpack to the bank.
-  ; Note: this should probably also happen to one's pack animals as well.
+  set %containerToBankFrom %1
 
   event sysMessage Banking ore
+  
+  ; Open the container just in case
+  gosub useObject %containerToBankFrom
 
   ; attempt to open the character's bank box
   event Macro 1 0 banco
 
-  ; double-check that we have access to the bank box
-    ; throw exception if we cannot access it.
-
-  ; TODO: Add for-each container (player's backpack, pack animal packs)
   ; for each ore type
   for %ore_type_index 1 %ore_pile_graphics_len
   {
     ; Get the ore graphic id
     gosub getIndex %ore_pile_graphics %ore_type_index |
     set %current_ore_type #result
-
-    ; findItem only returns one item at a time,
-    ; so we need to run this multiple times until we
-    ; no longer have anymore.
-    repeat
+    
+    findItem %current_ore_type %containerToBankFrom
+    
+    for #FINDINDEX 1 #FINDCNT
     {
-      ; try to find the current ore graphic in container
-      findItem %current_ore_type %backpack
-
-      if ( #FINDCNT > 0 )
+      if #FINDBAGID = %containerToBankFrom
       {
-        ; move it to the bank
-        exevent drag #FINDID #FINDSTACK
-        wait 1s
-        exevent dropc %bank_serial
-        wait 1s
+        gosub moveItemToContainer #FINDID %bank_serial
       }
     }
-    until #FINDCNT < 1
   }
 
   ; if we are anywhere near overweight still,
@@ -603,12 +593,17 @@ sub automine
     ; gotten jailed, and now are no longer where we should be.
     gosub ensureAtStartingPosition
 
-    gosub bankOre
+    gosub bankOre #BACKPACKID
+    gosub bankOre %packanimal_id_1
+    gosub bankOre %packanimal_id_2
+    gosub bankOre %packanimal_id_3
+    gosub bankOre %packanimal_id_4
+    gosub bankOre %packanimal_id_5
 
     gosub restockMiningResources
 
     ; TODO add something here for feeding pets if we have them
-    
+
     ; this is different from location_index in that those also
     ; include waypoints. This is necessary for picking the pack
     ; horse to give ore to.
@@ -620,7 +615,7 @@ sub automine
       ; Pull out the info for the next location
       gosub getIndex %locations %location_index |
       set %current_location_values #result
-      
+
       gosub getIndex %current_location_values 1 _
       set %current_location_x #RESULT
 
@@ -631,17 +626,17 @@ sub automine
       set %current_location_z #RESULT
 
       event sysMessage Walking to: %current_location_x %current_location_y
-      
+
       gosub walkToXY %current_location_x %current_location_y 2
 
 
       if %current_location_z <> W
       {
         gosub mineXYZ %current_location_x %current_location_y %current_location_z
-        
+
         ; Once we're done mining, we need to do a combine ore at the end
         gosub combineOre
-        
+
         ; Because we are going to have to juggle a number of horses, we need
         ; to figure out a way to give each of them ore so that no one horse
         ; gets overweight otherwise we're in trouble.
@@ -677,11 +672,11 @@ sub automine
             }
           }
         }
-        
+
         ; After that, we can stow onto a pack animal.
         ; Pack horse object type: ZJF
         gosub moveOreToPackAnimal %packanimal_id
-        
+
         ; Increment our spot tracker for mining spots
         set %current_mining_spot_index %current_mining_spot_index + 1
       }
