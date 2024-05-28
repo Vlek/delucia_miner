@@ -23,7 +23,11 @@
 
 event sysMessage Starting the autominer script!
 
-set %packanimal_id WPSALMD
+set %packanimal_id_1 WPSALMD
+set %packanimal_id_2 VTZBLMD
+set %packanimal_id_3 BUZBLMD
+set %packanimal_id_4 WTZBLMD
+set %packanimal_id_5 CUZBLMD
 
 set %bank_serial YPJRJMD
 set %bank_box C_ , %bank_serial
@@ -595,6 +599,11 @@ sub automine
     gosub restockMiningResources
 
     ; TODO add something here for feeding pets if we have them
+    
+    ; this is different from location_index in that those also
+    ; include waypoints. This is necessary for picking the pack
+    ; horse to give ore to.
+    set %current_mining_spot_index 1
 
     ; for each location,
     for %location_index 1 %locations_len
@@ -624,9 +633,48 @@ sub automine
         ; Once we're done mining, we need to do a combine ore at the end
         gosub combineOre
         
+        ; Because we are going to have to juggle a number of horses, we need
+        ; to figure out a way to give each of them ore so that no one horse
+        ; gets overweight otherwise we're in trouble.
+        ; What I have chosen to do is state that a given horse has six different
+        ; mining spots that they get ore at. Once we move beyond those spots,
+        ; then it goes to a different horse. That way it is fairly balanced.
+        if %current_mining_spot_index < 7
+        {
+          set %packanimal_id %packanimal_id_1
+        }
+        else
+        {
+          if %current_mining_spot_index < 13
+          {
+            set %packanimal_id %packanimal_id_2
+          }
+          else
+          {
+            if %current_mining_spot_index < 19
+            {
+              set %packanimal_id %packanimal_id_3
+            }
+            else
+            {
+              if %current_mining_spot_index < 25
+              {
+                set %packanimal_id %packanimal_id_4
+              }
+              else
+              {
+                set %packanimal_id %packanimal_id_5
+              }
+            }
+          }
+        }
+        
         ; After that, we can stow onto a pack animal.
         ; Pack horse object type: ZJF
-        gosub moveOreToPackAnimal
+        gosub moveOreToPackAnimal %packanimal_id
+        
+        ; Increment our spot tracker for mining spots
+        set %current_mining_spot_index %current_mining_spot_index + 1
       }
     }
   }
