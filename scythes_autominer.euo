@@ -43,6 +43,14 @@ set %ore_pile_graphics |
 str Count %ore_pile_graphics |
 set %ore_pile_graphics_len #strRes - 1
 
+set %large_ore_pile_graphics |
+  +GWJ|
+  +EWJ|
+  +DWJ|
+
+str Count %large_ore_pile_graphics |
+set %large_ore_pile_graphics_len #strRes - 1
+
 set %locations |
   +_5279_3968_38_|
   +_5280_3968_38_|
@@ -295,14 +303,14 @@ sub restockMiningResources
   ; Double-checking for ingots. We need at least 10.
   finditem ENK %backpack
 
-  if ( #FINDCNT = 0 || #FINDSTACK < 50 )
+  if ( #FINDCNT = 0 || #FINDSTACK < 75 )
   {
     event sysMessage Did not find enough ingots, attempting restock.
 
     finditem ENK C_ , %bank_serial
 
     ; If the player does not even have enough in the bank,
-    if ( #FINDCNT = 0 || #FINDSTACK < 50 )
+    if ( #FINDCNT = 0 || #FINDSTACK < 75 )
     {
       event sysMessage Did not find enough ingots in the bank, stopping.
       stop
@@ -311,8 +319,8 @@ sub restockMiningResources
     {
       event sysMessage Restocking ingots
       ; move it to the bank
-      ; TODO: only grab enough to get us to 50.
-      exevent drag #FINDID 50
+      ; TODO: only grab enough to get us to 75.
+      exevent drag #FINDID 75
       wait 1s
       exevent dropc #BACKPACKID
       wait 1s
@@ -361,9 +369,9 @@ sub combineOre
 
     if %small_ore_pile_id <> N/A
     {
-      for %large_pile_type 2 %ore_pile_graphics_len
+      for %large_pile_type 1 %large_ore_pile_graphics_len
       {
-        gosub getIndex %ore_pile_graphics %large_pile_type |
+        gosub getIndex %large_ore_pile_graphics %large_pile_type |
         set %ore_graphic #RESULT
 
         event sysMessage Searching for ore graphic: %ore_graphic
@@ -375,12 +383,15 @@ sub combineOre
 
         if %bigOrePile <> N/A
         {
+          ; Double-click the large pile
+          ; Note, it has to be in this order because otherwise the
+          ; object id goes away.
           gosub useObject %bigOrePile
 
           ; wait for target
           target 5s
 
-          ; target the little pile
+          ; target the small pile
           gosub targetObject %small_ore_pile_id
           wait 1s
         }
@@ -470,7 +481,7 @@ sub walkToXY
   ; and this should work just fine.
 
   event sysMessage Walking to point.
-  move %1 %2 %3 5s
+  move %1 %2 %3 15s
 return
 
 sub findOrMakePickaxe
@@ -521,7 +532,7 @@ sub findOrMakePickaxe
         ; Click Next Page button
         gosub clickGumpXY 380 270
 
-        wait 1s
+        wait 2s
 
         ; Click pickaxe button
         gosub clickGumpXY 234 191
@@ -692,5 +703,4 @@ return
 event sysMessage Finished loading in all of the code.
 
 gosub automine
-;gosub combineOre
 stop
