@@ -54,9 +54,108 @@ One of the unsung challenges that are likely only going to be fleshed out the be
 
 ## Code Architecture
 
+### Chunked into testable subs
+
+I did not want to get stuck with a lot of logic that I had to test from
+end-to-end. To that end, what I did was try to get everything into manageable,
+logical portions that could then be tested on their own without needing to wait
+until the whole was completed.
+
+Initially, I wanted to even see what I needed. I wrote out a skeleton for what
+the logic should be, and added a bunch of comments for things like 'combine ore
+here'.
+
+Over the course of a few weekends, what I ended up doing was going through each
+of these portions and knock them out bit by bit. Banking ore, restocking
+resources, mining a spot, walking from one spot to the next, etc. Each one of
+these could be worked on and then added to the whole.
+
+### Integration to the main sub
+
+When it came to a point where things could be put together and run through to
+test going to the first mining location, that was when it became clear that
+there were going to be issues with things interacting in ways that were not
+foreseen. For instance, the variables that are generated when information is
+passed are not cleared. This became a problem for the %3 variable that is not
+used nearly as much as %1 and %2. This also means that I could not really create
+a default value if the incoming variable was not cleared by checking whether it
+was n/a or not without at the end of every sub that uses it deleting the value
+out of it.
+
 ## Metrics
 
+### Coming up with what constitutes success
+
+My version of success is simply to go through an entire run from end-to-end
+without any intervention on my part. Doing so, regardless of speed or
+efficiency, would mean that all of the functioning parts are there, and that
+they could then have their rough parts polished if I ever got the urge to do so.
+
+### Run statistics
+
+Because of my very lax version of success, it was very easy to see when this was
+finally met. I did have one run where, because my character had the Always Run
+checked, he out-ran his horses and left them by the mountainside when attempting
+to run back to the bank.
+
+After unchecking that option and re-running with a longer timeout time to allow
+the additional time it would take to walk, I was able to complete several loops
+in a row without intervention.
+
 ## Retrospective
+
+### EasyUO is awful
+
+Back when I was playing, it seemed like magic. The things that it was able to do
+back when it was the only game in town were nothing short of mystical. Coming
+back to it after delving into Razor, UOSteam, StealthUO, and creating my own
+client, it feels so clunky and limited in a lot of weird ways.
+
+A lot of stuff is just broken. The language parser is so broken, it gives
+AutoHotkey a run for its money, and that is truly saying something. Adding parens
+in some places will cause things to stop working that would otherwise work.
+
+```
+; This fails
+for ( %index 1 %ore_pile_graphics_len )
+{
+  event sysMessage The current index is: %index
+}
+```
+
+For-loops just don't like parens around their expression. if-statements
+sometimes are OK, sometimes not. It really depends on the expression.
+
+Expressions worked sometimes and not others. I had to change from equals to does
+not equal or try to create some intermediary variables to hold some expression
+logic in order to then use them as booleans in if-statements. Nothing really
+made sense, it was all by trial and error.
+
+### Would this have been a good project for an 11 year old?
+
+I do not believe that this is something I would have wanted 11 year old me to
+have completed. I was fighting so much more with the language than I was
+actually trying to get code done. I had completed roughly the same sort of thing
+as a runebook miner in one Saturday and this took weeks. I may have gotten the
+wrong impression that coding was as much magic as it is writing down a list of
+logical steps due to just how awful the language parser is.
+
+
+### Did I learn anything?
+
+UOHybrid went down right as I was going to do this project. Because of that, I
+had to look into alternative servers. I wanted one that I could control, and
+ultimately landed on using ModernUO. It is pretty awesome. The amount of
+modifications to the underlying stack have allowed for serious gains in its
+ability to do things more efficiently. Saves take very small fractions of a
+second, so the script I was able to make did not even have to take RunUO-style
+saves into account.
+
+A clear head and a plan wins the day. There were a lot of frustrating points
+during the completion of this project. I am very happy to say that I did not let
+it get to me though. I knew in my gut that I was going to be able to succeed, it
+was only a matter of getting through the minor issues to get to the thing that I
+wanted. I fell back on my debugging skills and was able to prevail every time.
 
 ### Better Locations?
 
